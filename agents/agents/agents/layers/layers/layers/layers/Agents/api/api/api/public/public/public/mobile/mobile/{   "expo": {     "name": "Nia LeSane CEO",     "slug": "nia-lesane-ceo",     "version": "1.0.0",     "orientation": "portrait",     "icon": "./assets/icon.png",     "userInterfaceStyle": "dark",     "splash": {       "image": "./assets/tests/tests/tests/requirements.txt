@@ -1,0 +1,8 @@
+qiskit==0.43.0
+azure-quantum[qiskit]==0.28.0
+cryptography==41.0.7
+langchain==0.0.348
+langchain-community==0.0.22
+pinecone-client==3.0.1
+prometheus-client==0.18.0
+grafana-api==2.1.0
