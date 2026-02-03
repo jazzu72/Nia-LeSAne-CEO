@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Nia LeSane CEO",
+    "slug": "nia-lesane-ceo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "backgroundColor": "#0a0a0a"
+    },
+    "ios": {
+      "bundleIdentifier": "com.houseofjazzu.nialesaneceo"
+    },
+    "android": {
+      "package": "com.houseofjazzu.nialesaneceo"
+    }
+  }
+}
