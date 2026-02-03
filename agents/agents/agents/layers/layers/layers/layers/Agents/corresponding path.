@@ -1,0 +1,56 @@
+Nia-LeSane-CEO/
+├── enhanced_brain.py         # Main entry point & orchestrator
+├── agents/                   # Trinity agents
+│   ├── __init__.py
+│   ├── nia.py                # Governance & ReAct
+│   ├── savon.py              # Yield & Mining (financial)
+│   └── kano.py               # Security & Defense
+├── layers/                   # Brain layers
+│   ├── __init__.py
+│   ├── planning.py           # Goal decomposition
+│   ├── memory.py             # Vector DB + self-pruning
+│   ├── tooling.py            # Dynamic registry + quantum tools
+│   ├── execution.py          # Async executor with guardrails
+│   └── self_improvement.py   # Recursive loops + PR proposal
+├── mcp/                      # MCP Servers stubs
+│   ├── __init__.py
+│   ├── finance_bridge.py     # BRICS/BTC
+│   ├── security_monitor.py   # Threat intel
+│   └── trust_registry.py     # Compliance
+├── observability/            # Monitoring layer
+│   ├── __init__.py
+│   ├── telemetry.py          # WebSocket real-time
+│   ├── trace_viz.py          # Reasoning visualization
+│   └── monitoring.py         # Prometheus + Grafana
+├── vault/                    # Air-gapped vault
+│   ├── __init__.py
+│   ├── crypto.py             # AES-256-GCM + MPC
+│   └── offline_signing.py    # Offline node
+├── hosting/                  # Singapore VPS pattern
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── nginx.conf
+│   └── cloudflare_setup.md
+├── api/                      # FastAPI backend for web/Telegram
+│   ├── main.py               # FastAPI entry
+│   ├── stripe_webhook.py     # Stripe handler
+│   └── telegram_webhook.py   # Telegram handler
+├── public/                   # Web dashboard static files
+│   ├── index.html            # Dashboard
+│   ├── style.css             # Dark jazz theme
+│   └── script.js             # Frontend logic
+├── mobile/                   # Expo mobile prep
+│   ├── App.tsx               # Main app
+│   ├── app.json              # Expo config
+│   └── eas.json              # EAS build
+├── tests/                    # Unit tests
+│   ├── test_core.py          # Core brain tests
+│   ├── test_agents.py        # Trinity agents tests
+│   └── test_layers.py        # Layers tests
+├── .env.example              # Env template
+├── requirements.txt          # Pinned deps
+├── vercel.json               # Vercel config
+├── .gitignore                # Git ignores
+├── LICENSE                   # MIT license
+├── README.md                 # Full docs
+└── launch.md                 # Launch guide
