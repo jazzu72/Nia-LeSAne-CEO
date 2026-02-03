@@ -1,0 +1,2 @@
+- name: Harden Repo
+  run: pwsh tools/harden-repo.ps1
