@@ -1,0 +1,16 @@
+from langchain_openai import ChatOpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+import os
+
+llm = ChatOpenAI(
+    openai_api_key=os.getenv("XAI_API_KEY"),
+    openai_api_base="https://api.x.ai/v1",
+    model="grok-3"
+)
+
+prompt = PromptTemplate.from_template("Explain how to integrate xAI API: {topic}")
+chain = LLMChain(llm=llm, prompt=prompt)
+
+response = chain.invoke({"topic": "in Python"})
+print(response['text'])
