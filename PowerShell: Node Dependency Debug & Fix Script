@@ -1,0 +1,53 @@
+# =========================================
+# Node Dependency Lockfile Debug Script
+# =========================================
+
+Write-Host "🔍 Starting Node dependency diagnostics..." -ForegroundColor Cyan
+
+$root = Get-Location
+
+$packageJson = Join-Path $root "package.json"
+$npmLock     = Join-Path $root "package-lock.json"
+$yarnLock    = Join-Path $root "yarn.lock"
+$shrinkwrap  = Join-Path $root "npm-shrinkwrap.json"
+
+if (-not (Test-Path $packageJson)) {
+    Write-Error "❌ package.json not found. This repo is not a Node project."
+    exit 1
+}
+
+Write-Host "✅ package.json found"
+
+$lockFiles = @($npmLock, $yarnLock, $shrinkwrap) | Where-Object { Test-Path $_ }
+
+if ($lockFiles.Count -gt 1) {
+    Write-Error "❌ Multiple lock files detected. Choose ONE package manager."
+    $lockFiles | ForEach-Object { Write-Host " - $($_)" }
+    exit 1
+}
+
+if ($lockFiles.Count -eq 0) {
+    Write-Warning "⚠️ No dependency lock file found."
+
+    if (Get-Command npm -ErrorAction SilentlyContinue) {
+        Write-Host "📦 Generating package-lock.json using npm..."
+        npm install --package-lock-only --ignore-scripts
+
+        if (-not (Test-Path $npmLock)) {
+            Write-Error "❌ npm failed to generate package-lock.json"
+            exit 1
+        }
+
+        Write-Host "✅ package-lock.json created"
+    }
+    else {
+        Write-Error "❌ npm is not available in PATH"
+        exit 1
+    }
+}
+else {
+    Write-Host "✅ Lock file detected:"
+    $lockFiles | ForEach-Object { Write-Host " - $($_)" }
+}
+
+Write-Host "🚀 Dependency diagnostics complete" -ForegroundColor Green
