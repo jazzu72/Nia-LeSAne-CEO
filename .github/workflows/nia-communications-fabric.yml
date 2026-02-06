@@ -1,0 +1,205 @@
+name: 🎷 NIA Communications Fabric
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created, edited]
+  pull_request:
+    types: [opened, synchronize, edited]
+  pull_request_review_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+env:
+  SYSTEM_NAME: "NIA Communications Fabric"
+  OWNER: "House of Jazzu"
+  VERSION: "1.0.0"
+
+jobs:
+
+  # ─────────────────────────────────────────────
+  # 1. NORMALIZE EVENT (SINGLE SOURCE OF TRUTH)
+  # ─────────────────────────────────────────────
+  normalize:
+    runs-on: ubuntu-latest
+    outputs:
+      is_nia: ${{ steps.normalize.outputs.is_nia }}
+      payload: ${{ steps.normalize.outputs.payload }}
+    steps:
+      - name: Normalize Event
+        id: normalize
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          EVENT="${{ github.event_name }}"
+
+          case "$EVENT" in
+            issues)
+              TITLE="${{ github.event.issue.title }}"
+              BODY="${{ github.event.issue.body }}"
+              URL="${{ github.event.issue.html_url }}"
+              AUTHOR="${{ github.event.issue.user.login }}"
+              TYPE="issue"
+              ;;
+            issue_comment)
+              TITLE="${{ github.event.issue.title }}"
+              BODY="${{ github.event.comment.body }}"
+              URL="${{ github.event.comment.html_url }}"
+              AUTHOR="${{ github.event.comment.user.login }}"
+              TYPE="issue_comment"
+              ;;
+            pull_request)
+              TITLE="${{ github.event.pull_request.title }}"
+              BODY="${{ github.event.pull_request.body }}"
+              URL="${{ github.event.pull_request.html_url }}"
+              AUTHOR="${{ github.event.pull_request.user.login }}"
+              TYPE="pull_request"
+              ;;
+            pull_request_review_comment)
+              TITLE="${{ github.event.pull_request.title }}"
+              BODY="${{ github.event.comment.body }}"
+              URL="${{ github.event.comment.html_url }}"
+              AUTHOR="${{ github.event.comment.user.login }}"
+              TYPE="pr_comment"
+              ;;
+            *)
+              exit 0
+              ;;
+          esac
+
+          if echo "$TITLE" | grep -qi '\[NIA\]'; then
+            IS_NIA=true
+          else
+            IS_NIA=false
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg system "$SYSTEM_NAME" \
+            --arg owner "$OWNER" \
+            --arg version "$VERSION" \
+            --arg event "$EVENT" \
+            --arg type "$TYPE" \
+            --arg title "$TITLE" \
+            --arg body "$BODY" \
+            --arg url "$URL" \
+            --arg author "$AUTHOR" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              system: $system,
+              owner: $owner,
+              version: $version,
+              event: $event,
+              type: $type,
+              title: $title,
+              body: $body,
+              url: $url,
+              author: $author,
+              timestamp: $timestamp
+            }'
+          )
+
+          echo "is_nia=$IS_NIA" >> $GITHUB_OUTPUT
+          echo "payload<<EOF" >> $GITHUB_OUTPUT
+          echo "$PAYLOAD" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  # ─────────────────────────────────────────────
+  # 2. MATRIX ROUTER (POLICY-DRIVEN)
+  # ─────────────────────────────────────────────
+  route:
+    needs: normalize
+    if: needs.normalize.outputs.is_nia == 'true'
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        channel:
+          - email
+          - slack
+          - webhook
+
+    steps:
+      - name: Route Context
+        shell: bash
+        run: |
+          mkdir -p logs
+          echo '${{ needs.normalize.outputs.payload }}' > payload.json
+
+      # ───────── EMAIL ─────────
+      - name: Deliver Email
+        if: matrix.channel == 'email'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.JAZZ_EMAIL }}
+          password: ${{ secrets.JAZZ_EMAIL_PASSWORD }}
+          to: ${{ secrets.JAZZ_EMAIL }}
+          from: "NIA <${{ secrets.JAZZ_EMAIL }}>"
+          subject: "[NIA] $(jq -r .title payload.json)"
+          body: |
+            🎷 NIA COMMUNICATION
+
+            $(jq -r .body payload.json)
+
+            ——
+            Author: $(jq -r .author payload.json)
+            Event:  $(jq -r .type payload.json)
+            Link:   $(jq -r .url payload.json)
+
+      # ───────── SLACK ─────────
+      - name: Deliver Slack
+        if: matrix.channel == 'slack'
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "*🎷 NIA Alert*\n*Title:* $(jq -r .title payload.json)\n*Author:* $(jq -r .author payload.json)\n<$(jq -r .url payload.json)|View on GitHub>"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.NIA_SLACK_WEBHOOK }}
+
+      # ───────── WEBHOOK ─────────
+      - name: Deliver Webhook
+        if: matrix.channel == 'webhook'
+        run: |
+          curl -sSf -X POST "${{ secrets.NIA_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            --data-binary @payload.json
+
+      - name: Audit Log
+        if: always()
+        run: |
+          echo "$(date -u) | channel=${{ matrix.channel }} | delivered" >> logs/audit.log
+
+      - name: Upload Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nia-${{ matrix.channel }}-audit
+          path: logs/
+
+  # ─────────────────────────────────────────────
+  # 3. EXECUTIVE SUMMARY
+  # ─────────────────────────────────────────────
+  summary:
+    needs: [normalize, route]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Summary
+        run: |
+          echo "## 🎷 NIA Communications Fabric" >> $GITHUB_STEP_SUMMARY
+          echo "- Owner: $OWNER" >> $GITHUB_STEP_SUMMARY
+          echo "- Version: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered: ${{ needs.normalize.outputs.is_nia }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Channels: Email · Slack · Webhook" >> $GITHUB_STEP_SUMMARY
+          echo "- Timestamp: $(date -u)" >> $GITHUB_STEP_SUMMARY
