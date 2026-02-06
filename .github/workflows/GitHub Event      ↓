@@ -1,0 +1,13 @@
+GitHub Event
+     ↓
+[ Event Normalizer ]
+     ↓
+[ Policy Engine ]
+     ↓
+[ Matrix Router ]
+     ↓
+┌────────┬────────┬────────┬────────┐
+│ Email  │ Slack  │ Webhook│ Future │
+└────────┴────────┴────────┴────────┘
+     ↓
+[ Audit + Summary + Artifacts ]
