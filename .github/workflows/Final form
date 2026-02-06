@@ -1,0 +1,15 @@
+GitHub Event
+   ↓
+[ Event Normalizer ]
+   ↓
+[ Policy Engine ]
+   ↓
+[ Encryption + Signing Layer ]   ← NEW
+   ↓
+[ Matrix Router ]
+   ↓
+┌────────┬────────┬────────┬────────┐
+│ Email  │ Slack  │ Webhook│ Future │
+└────────┴────────┴────────┴────────┘
+   ↓
+[ Audit Ledger + Summary ]
